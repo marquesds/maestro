@@ -18,6 +18,7 @@
     <orderEntry type="library" name="Leiningen: clojure-complete:0.2.4" level="project" />
     <orderEntry type="library" name="Leiningen: compliment:0.2.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/clojure:1.8.0" level="project" />
+    <orderEntry type="library" name="Leiningen: org.clojure/data.json:0.2.6" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/java.classpath:0.2.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/tools.namespace:0.2.5" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/tools.nrepl:0.2.12" level="project" />

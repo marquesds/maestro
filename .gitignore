@@ -2,3 +2,4 @@
 .lein-*
 .idea
 .DS_Store
+.nrepl-*
