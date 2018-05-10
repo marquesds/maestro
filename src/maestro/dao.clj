@@ -2,7 +2,13 @@
 
 
 (defn save-entity [collection entity]
-  (swap! collection conj entity))
+  (do (swap! collection conj entity)
+      collection))
 
-(defn get-entity [collection uuid]
-  (first (filter (fn [dict] (= (get dict "id") uuid)) @collection)))
+(defn save-entity-keep-order [collection entity]
+  "Expects a atom with clojure.lang.PersistentVector as collection"
+  (if-not (.contains collection entity)
+    (save-entity collection entity)))
+
+(defn get-entity-by-id [collection id]
+  (first (filter (fn [dict] (= (get dict "id") id)) @collection)))
