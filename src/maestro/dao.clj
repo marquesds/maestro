@@ -6,8 +6,8 @@
       collection))
 
 (defn save-entity-keep-order [collection entity]
-  "Expects a atom with clojure.lang.PersistentVector as collection"
-  (if-not (.contains collection entity)
+  "Expects an atom with clojure.lang.PersistentVector as collection"
+  (if-not (.contains @collection entity)
     (save-entity collection entity)))
 
 (defn get-entity-by-id [collection id]
