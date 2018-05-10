@@ -2,7 +2,7 @@
   (:gen-class)
   (:require [clojure.data.json :as json]))
 
-(defn parse-file [file-path]
+(defn parse-file! [file-path]
   (let [file-content (slurp file-path)]
     (json/read-str file-content)))
 

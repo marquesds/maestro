@@ -6,4 +6,4 @@
 
 (deftest test-parse-json-file
   (with-redefs [slurp (fn [f & opts] fake-file-content)]
-    (is (= [{"new_agent" {"name" "BoJack Horseman"}}] (parse-file "input.json")))))
+    (is (= [{"new_agent" {"name" "BoJack Horseman"}}] (parse-file! "input.json")))))
