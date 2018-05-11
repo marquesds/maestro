@@ -28,6 +28,10 @@
   (is (= (contains? @entities fake-entity) true))
   (is (= (count @entities) 1)))
 
+(deftest test-try-save-nil-entity
+  (save-entity entities nil)
+  (is (empty? @entities)))
+
 (deftest test-save-entity-keeping-insertion-order
   (save-entity-keep-order ordered-entities fake-entity)
   (save-entity-keep-order ordered-entities another-fake-entity)

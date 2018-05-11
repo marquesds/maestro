@@ -2,8 +2,9 @@
 
 
 (defn save-entity [collection entity]
-  (do (swap! collection conj entity)
-      collection))
+  (if-not (nil? entity)
+  	(do (swap! collection conj entity)
+      collection)))
 
 (defn save-entity-keep-order [collection entity]
   "Expects an atom with clojure.lang.PersistentVector as collection"
