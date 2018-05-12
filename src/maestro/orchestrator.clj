@@ -59,3 +59,16 @@
   [input-json]
   (doseq [element input-json]
   	(save-entity (get-collection element) (get-entity element))))
+
+(defn assign-job
+	[nu-agent job]
+	{"job_assigned" { "job_id" (get job "id") "agent_id" (get nu-agent "id")}})
+
+(defn orchestrate
+	[input-json]
+	(save-entities input-json)
+	(doseq [job-request @job-requests]
+		(let [nu-agent (get-entity-by-id (get job-request "agent_id"))]
+			(if-let [fittest-job (get-fittest-job nu-agent @jobs)]
+				(save-entity jobs-assigned (assign-job nu-agent fittest-job)))))
+	@jobs-assigned)
