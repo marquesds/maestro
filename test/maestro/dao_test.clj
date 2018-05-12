@@ -20,12 +20,12 @@
 
 (deftest test-save-entity
   (save-entity entities fake-entity)
-  (is (= (contains? @entities fake-entity) true)))
+  (is (= (.contains @entities fake-entity) true)))
 
 (deftest test-try-save-duplicated-entity
   (save-entity entities fake-entity)
   (save-entity entities fake-entity)
-  (is (= (contains? @entities fake-entity) true))
+  (is (= (.contains @entities fake-entity) true))
   (is (= (count @entities) 1)))
 
 (deftest test-try-save-nil-entity
@@ -54,3 +54,17 @@
   (save-entity entities fake-entity)
   (let [entity (get-entity-by-id entities "ed0e23ef-6c2b-430c-9b90-cd4f1ff74c88")]
     (is (= entity nil))))
+
+(deftest test-delete-entity
+  (save-entity entities fake-entity)
+  (save-entity entities another-fake-entity)
+  (delete-entity entities fake-entity)
+  (is (not (.contains @entities fake-entity)))
+  (is (.contains @entities another-fake-entity)))
+
+(deftest test-delete-entity-from-ordered-entities
+  (save-entity ordered-entities fake-entity)
+  (save-entity ordered-entities another-fake-entity)
+  (delete-entity ordered-entities fake-entity)
+  (is (not (.contains @ordered-entities fake-entity)))
+  (is (.contains @ordered-entities another-fake-entity)))
