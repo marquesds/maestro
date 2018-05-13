@@ -58,7 +58,10 @@
 (defn save-entities
   [input-json]
   (doseq [element input-json]
-  	(save-entity (get-collection element) (get-entity element))))
+  	(let [collection (get-collection element)]
+  		(if (= collection jobs)
+  			(save-entity-keep-order collection (get-entity element))
+  			(save-entity collection (get-entity element))))))
 
 (defn assign-job
 	[nu-agent job]
@@ -68,7 +71,10 @@
 	[input-json]
 	(save-entities input-json)
 	(doseq [job-request @job-requests]
-		(let [nu-agent (get-entity-by-id (get job-request "agent_id"))]
+		(let [nu-agent (get-entity-by-id agents (get job-request "agent_id"))]
 			(if-let [fittest-job (get-fittest-job nu-agent @jobs)]
-				(save-entity jobs-assigned (assign-job nu-agent fittest-job)))))
+				(do
+					(save-entity jobs-assigned (assign-job nu-agent fittest-job))
+					(delete-entity jobs fittest-job)
+					(delete-entity job-requests job-request)))))
 	@jobs-assigned)
