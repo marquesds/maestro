@@ -8,25 +8,6 @@ Assign fittest job to correct nu-agents
 
 ## Project's Structure
 
-.
-├── README.md
-├── maestro.iml
-├── project.clj
-├── resources
-│   └── images
-│       └── orchestra.jpg
-├── src
-│   └── maestro
-│       ├── cli.clj
-│       ├── dao.clj
-│       └── orchestrator.clj
-└── test
-    └── maestro
-        ├── cli_test.clj
-        ├── dao_test.clj
-        └── orchestrator_test.clj
-
-
  - src/maestro/cli.clj
     - User's entry point where the given json file is parsed and used as input to src/maestro/orchestrator.clj `orchestrate` function;
  - src/maestro/orchestrator.clj
