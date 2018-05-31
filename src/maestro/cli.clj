@@ -1,9 +1,8 @@
 (ns maestro.cli
   (:gen-class)
   (:require [clojure.data.json :as json]
-  			[clojure.tools.cli :refer [parse-opts]]
-  			[maestro.orchestrator :refer :all]))
-
+  			    [clojure.tools.cli :refer [parse-opts]]
+  			    [maestro.orchestrator :refer :all]))
 
 (def cli-options
   [["-i" "--input PATH" "Input json"]])
