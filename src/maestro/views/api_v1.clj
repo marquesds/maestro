@@ -10,12 +10,12 @@
 
 (defn get-nu-agents
   [{{:keys [search]} :query-params}]
-  {:body @nu-agents
+  {:body (json/write-str @nu-agents)
   :status 200})
 
 (defn create-nu-agents
   [{:keys [body headers]}]
-  (let [input (slurp body)]
+  (let [input (json/read-str (slurp body))]
   	(s/validate nu-agent-schema input)
   	(save-entity nu-agents input)
   	{:status 201}))
