@@ -1,5 +1,4 @@
-(ns maestro.views.schema
-  (:gen-class)
+(ns maestro.schema
   (:require [schema.core :as s]))
 
 (def nu-agent-schema
