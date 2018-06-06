@@ -7,6 +7,7 @@
   	        [maestro.schema :refer :all]))
 
 (def nu-agents (atom #{}))
+(def jobs (atom #{}))
 
 (defn get-entity
   [coll id]
@@ -49,10 +50,29 @@
   	(let [result (save-entity! nu-agents nu-agent-schema json-input)]
       result)))
 
+(defn get-job
+  [{{:keys [id]} :path-params}]
+  (let [result (get-entity jobs id)]
+    result))
+
+(defn get-jobs
+  [context]
+  (if-let [result (get-entities @jobs)]
+    result))
+
+(defn create-job
+  [{:keys [body headers]}]
+  (let [json-input (json/read-str (slurp body))]
+    (let [result (save-entity! jobs job-schema json-input)]
+      result)))
+
 (def routes
   #{["/api/v1/nu-agents"     :get [get-nu-agents] :route-name ::get-nu-agents]
     ["/api/v1/nu-agents/:id" :get [get-nu-agent] :route-name ::get-nu-agent]
-    ["/api/v1/nu-agents"     :post [create-nu-agent] :route-name ::create-nu-agent]})
+    ["/api/v1/nu-agents"     :post [create-nu-agent] :route-name ::create-nu-agent]
+    ["/api/v1/jobs"          :get [get-jobs] :route-name ::get-jobs]
+    ["/api/v1/jobs/:id"      :get [get-job] :route-name ::get-job]
+    ["/api/v1/jobs"          :post [create-job] :route-name ::create-job]})
 
 (def service
   {::http/type   :jetty

@@ -9,7 +9,8 @@
 (defn reset-data 
   [test-fn]
   (do
-    (reset! nu-agents #{}))
+    (reset! nu-agents #{})
+    (reset! jobs #{}))
   (test-fn))
 
 (use-fixtures :each reset-data)
@@ -26,8 +27,21 @@
                    "primary_skillset" ["bills-questions"]
                    "secondary_skillset" []}))
 
+(def valid-job-input 
+  (json/write-str {"id" "ed0e23ef-6c2b-430c-9b90-cd4f1ff74c88"
+                   "type" "rewards-question"
+                   "urgent" false}))
+
+(def invalid-job-input
+  (json/write-str {"id" "ed0e23ef-6c2b-430c-9b90-cd4f1ff74c88"
+                   "type" "rewards-question"
+                   "urgent" 1}))
+
 (def nu-agent-validation-output
   "{\"error\":\"Value does not match schema: {\\\"name\\\" (not (instance? java.lang.String 123456))}\"}")
+
+(def job-validation-output
+  "{\"error\":\"Value does not match schema: {\\\"urgent\\\" (not (instance? java.lang.Boolean 1))}\"}")
 
 (def service-fn
   (::http/service-fn (http/create-servlet {::http/routes routes ::http/port 9000})))
@@ -72,3 +86,44 @@
   	                                                    :body invalid-nu-agent-input)]
     (is (= 400 (:status response)))
     (is (= nu-agent-validation-output (:body response)))))
+
+(deftest get-job-test
+  (save-entity jobs (json/read-str valid-job-input))
+  (let [response (pedestal-test/response-for service-fn 
+                  :get "/api/v1/jobs/ed0e23ef-6c2b-430c-9b90-cd4f1ff74c88")]
+    (is (= 200 (:status response)))
+    (is (= valid-job-input (:body response)))))
+
+(deftest get-job-not-found-test
+  (let [response (pedestal-test/response-for service-fn 
+                  :get "/api/v1/jobs/ed0e23ef-6c2b-430c-9b90-cd4f1ff74c88")]
+    (is (= 404 (:status response)))
+    (is (= "{}" (:body response)))))
+
+(deftest get-jobs-test
+  (save-entity jobs (json/read-str valid-job-input))
+  (let [response (pedestal-test/response-for service-fn 
+                  :get "/api/v1/jobs")]
+    (is (= 200 (:status response)))
+    (is (= (json/write-str @jobs) (:body response)))))
+
+(deftest get-jobs-not-found-test
+  (let [response (pedestal-test/response-for service-fn 
+                  :get "/api/v1/jobs")]
+    (is (= 404 (:status response)))
+    (is (= "[]" (:body response)))))
+
+(deftest create-job-test
+  (let [response (pedestal-test/response-for service-fn :post "/api/v1/jobs" 
+                                                        :headers {"Content-Type" "application/json"}
+                                                        :body valid-job-input)]
+    (is (= 201 (:status response)))
+    (is (= "{}" (:body response)))
+    (is (= #{(json/read-str valid-job-input)} @jobs))))
+
+(deftest create-job-failed-test
+  (let [response (pedestal-test/response-for service-fn :post "/api/v1/jobs" 
+                                                        :headers {"Content-Type" "application/json"}
+                                                        :body invalid-job-input)]
+    (is (= 400 (:status response)))
+    (is (= job-validation-output (:body response)))))

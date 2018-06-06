@@ -6,3 +6,8 @@
    (s/required-key "name") s/Str
    (s/required-key "primary_skillset") [s/Str]
    (s/required-key "secondary_skillset") [s/Str]})
+
+(def job-schema
+  {(s/required-key "id") s/Str
+   (s/required-key "type") s/Str
+   (s/required-key "urgent") s/Bool})
