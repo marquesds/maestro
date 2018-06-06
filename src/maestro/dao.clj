@@ -1,22 +1,22 @@
 (ns maestro.dao)
 
 (defn save-entity 
-  [collection entity]
+  [coll entity]
   (when-not (nil? entity)
-    (swap! collection conj entity) 
-    collection))
+    (swap! coll conj entity) 
+    coll))
 
 (defn save-entity-keep-order 
-  [collection entity]
-  "Expects an atom with clojure.lang.PersistentVector as collection"
-  (when-not (.contains @collection entity)
-  	(save-entity collection entity)))
+  [coll entity]
+  "Expects an atom with clojure.lang.PersistentVector as coll"
+  (when-not (.contains @coll entity)
+  	(save-entity coll entity)))
 
 (defn get-entity-by-id 
-  [collection id]
-  (first (filter (fn [dict] (= (get dict "id") id)) @collection)))
+  [coll id]
+  (first (filter (fn [dict] (= (get dict "id") id)) @coll)))
 
 (defn delete-entity
-  [collection entity]
-  (swap! collection (fn [x] (remove #{entity} x)))
-    collection)
+  [coll entity]
+  (swap! coll (fn [x] (remove #{entity} x)))
+    coll)

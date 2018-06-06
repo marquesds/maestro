@@ -5,7 +5,7 @@
 (defn reset-data 
   [test-fn]
   (do
-    (reset! agents #{})
+    (reset! nu-agents #{})
     (reset! jobs #{})
     (reset! job-requests [])
     (reset! jobs-assigned #{}))
@@ -89,25 +89,25 @@
     (let [entity (get-entity nu-developer)]
       (is (nil? entity)))))
 
-(deftest get-agents-collection-test
-  (let [collection (get-collection {"new_agent" {"id" "1234"}})]
-    (is (= collection agents))))
+(deftest get-nu-agents-collection-test
+  (let [coll (get-collection {"new_agent" {"id" "1234"}})]
+    (is (= coll nu-agents))))
 
 (deftest get-jobs-collection-test
-  (let [collection (get-collection {"new_job" {"id" "3221"}})]
-    (is (= collection jobs))))
+  (let [coll (get-collection {"new_job" {"id" "3221"}})]
+    (is (= coll jobs))))
 
 (deftest get-job-requests-collection-test
-  (let [collection (get-collection {"job_request" {"id" "9887"}})]
-    (is (= collection job-requests))))
+  (let [coll (get-collection {"job_request" {"id" "9887"}})]
+    (is (= coll job-requests))))
 
 (deftest get-jobs-assigned-collection-test
-  (let [collection (get-collection {"job_assigned" {"job_id" "3221" "agent_id" "1234"}})]
-    (is (= collection jobs-assigned))))
+  (let [coll (get-collection {"job_assigned" {"job_id" "3221" "agent_id" "1234"}})]
+    (is (= coll jobs-assigned))))
 
 (deftest get-non-existent-collection-test
-  (let [collection (get-collection {"not_found" {"id" "404"}})]
-    (is (nil? collection))))
+  (let [coll (get-collection {"not_found" {"id" "404"}})]
+    (is (nil? coll))))
 
 (deftest urgent-job-test
   (is (true? (urgent? {"urgent" true}))))
@@ -178,7 +178,7 @@
   	                {"new_job" {"id" "3221"}} 
   	                {"job_request" {"id" "9887"}}]]
     (save-entities input-json)
-    (is (= (first @agents) {"id" "1234"}))
+    (is (= (first @nu-agents) {"id" "1234"}))
     (is (= (first @jobs) {"id" "3221"}))
     (is (= (first @job-requests) {"id" "9887"}))))
 

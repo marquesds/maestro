@@ -1,7 +1,7 @@
 (ns maestro.orchestrator
   (:require [maestro.dao :refer :all]))
 
-(def agents (atom #{}))
+(def nu-agents (atom #{}))
 (def jobs (atom #{}))
 (def job-requests (atom []))
 (def jobs-assigned (atom #{}))
@@ -15,7 +15,7 @@
 (defn get-collection 
   [element]
   (cond 
-    (not (nil? (get element "new_agent"))) agents
+    (not (nil? (get element "new_agent"))) nu-agents
     (not (nil? (get element "new_job"))) jobs
     (not (nil? (get element "job_request"))) job-requests
     (not (nil? (get element "job_assigned"))) jobs-assigned))
@@ -54,10 +54,10 @@
 (defn save-entities
   [input-json]
   (doseq [element input-json]
-  	(let [collection (get-collection element)]
-  	  (if (= collection jobs)
-  	    (save-entity-keep-order collection (get-entity element))
-        (save-entity collection (get-entity element))))))
+  	(let [coll (get-collection element)]
+  	  (if (= coll jobs)
+  	    (save-entity-keep-order coll (get-entity element))
+        (save-entity coll (get-entity element))))))
 
 (defn assign-job
   [nu-agent job]
@@ -67,7 +67,7 @@
   [input-json]
   (save-entities input-json)
   (doseq [job-request @job-requests]
-    (let [nu-agent (get-entity-by-id agents (get job-request "agent_id"))]
+    (let [nu-agent (get-entity-by-id nu-agents (get job-request "agent_id"))]
       (when-let [fittest-job (get-fittest-job nu-agent @jobs)]
         (save-entity jobs-assigned (assign-job nu-agent fittest-job))
         (delete-entity jobs fittest-job)
