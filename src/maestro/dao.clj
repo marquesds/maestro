@@ -13,8 +13,10 @@
   	(save-entity coll entity)))
 
 (defn get-entity-by-id 
-  [coll id]
-  (first (filter (fn [dict] (= (get dict "id") id)) @coll)))
+  ([coll id]
+    (get-entity-by-id coll id "id"))
+  ([coll id k]
+    (first (filter (fn [dict] (= (get dict k) id)) @coll))))
 
 (defn delete-entity
   [coll entity]

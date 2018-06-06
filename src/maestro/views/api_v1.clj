@@ -13,6 +13,8 @@
 (def jobs (atom #{}))
 (def job-requests (atom []))
 (def jobs-assigned (atom #{}))
+(def finished-jobs (atom #{}))
+(def jobs-on-progress (atom #{}))
 
 (defn not-found
   [body]
@@ -40,16 +42,6 @@
        {:body (json/write-str {:error (.getMessage e)}) 
         :status 400
         :headers headers})))
-
-(defn assign
-  [json-input]
-  (if-let [nu-agent (get-entity-by-id nu-agents (get json-input "agent_id"))]
-      (if-let [fittest-job (get-fittest-job nu-agent @jobs)]
-        (do
-          (save-entity jobs-assigned (assign-job nu-agent fittest-job))
-          {:body (json/write-str fittest-job) :status 201 :headers headers})
-        (not-found "{}"))
-      (not-found "{}")))
 
 (defn get-nu-agent
   [{{:keys [id]} :path-params}]
@@ -95,10 +87,19 @@
                                job-request-schema json-input)]
       (if (= 201 (:status result))
         (if-let [job-assigned (orchestrate json-input nu-agents 
-                                           jobs jobs-assigned job-requests)]
+                                           jobs jobs-assigned job-requests
+                                           finished-jobs jobs-on-progress)]
           {:body (json/write-str job-assigned) :status 201 :headers headers}
           (not-found "{}"))
         result))))
+
+(defn get-queue-state
+  [context]
+  {:body (json/write-str {"waiting" @jobs 
+                          "on_progress" @jobs-on-progress 
+                          "finished" @finished-jobs})
+   :status 200
+   :headers headers})
 
 (def routes
   #{["/api/v1/nu-agents"        :get [get-nu-agents] :route-name ::get-nu-agents]
@@ -108,7 +109,8 @@
     ["/api/v1/jobs/:id"         :get [get-job] :route-name ::get-job]
     ["/api/v1/jobs"             :post [create-job] :route-name ::create-job]
     ["/api/v1/job-requests"     :get [get-job-requests] :route-name ::get-job-requests]
-    ["/api/v1/job-requests"     :post [create-job-request] :route-name ::create-job-request]})
+    ["/api/v1/job-requests"     :post [create-job-request] :route-name ::create-job-request]
+    ["/api/v1/jobs-queue"       :get [get-queue-state] :route-name ::get-queue-state]})
 
 (def service
   {::http/type   :jetty

@@ -36,12 +36,26 @@
   [nu-agent job]
   { "job_id" (get job "id") "agent_id" (get nu-agent "id")})
 
+(defn finish-job
+  [nu-agent job-requests jobs-on-progress finished-jobs]
+  (let [nu-agent-id (get nu-agent "id")]
+  	(when-let [job-request (get-entity-by-id job-requests nu-agent-id "agent_id")]
+  		(when-let [job (get-entity-by-id jobs-on-progress (get job-request "job_id"))]
+  			(save-entity finished-jobs job)
+  			(delete-entity jobs-on-progress job)))))
+
+(defn start-job
+  [job jobs jobs-on-progress]
+  (save-entity jobs-on-progress job)
+  (delete-entity jobs job))
+
 (defn orchestrate
-  [job-request nu-agents jobs jobs-assigned job-requests]
+  [job-request nu-agents jobs jobs-assigned job-requests finished-jobs jobs-on-progress]
   (when-let [nu-agent (get-entity-by-id nu-agents (get job-request "agent_id"))]
     (when-let [fittest-job (get-fittest-job nu-agent @jobs)]
       (let [job-assigned (assign-job nu-agent fittest-job)]
       	(save-entity jobs-assigned (assign-job nu-agent fittest-job))
-        (delete-entity jobs fittest-job)
+        (finish-job nu-agent job-requests jobs-on-progress finished-jobs)
+        (start-job fittest-job jobs jobs-on-progress)
         (delete-entity job-requests job-request)
         job-assigned))))

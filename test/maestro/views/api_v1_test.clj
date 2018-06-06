@@ -12,7 +12,9 @@
     (reset! nu-agents #{})
     (reset! jobs #{})
     (reset! job-requests [])
-    (reset! jobs-assigned #{}))
+    (reset! jobs-assigned #{})
+    (reset! finished-jobs #{})
+    (reset! jobs-on-progress #{}))
   (test-fn))
 
 (use-fixtures :each reset-data)
@@ -189,3 +191,15 @@
                                                         :body invalid-job-request-input)]
     (is (= 400 (:status response)))
     (is (= job-request-validation-output (:body response)))))
+
+(deftest get-queue-state-waiting-test
+  (save-data)
+  (let [response (pedestal-test/response-for service-fn :get "/api/v1/jobs-queue" 
+                                                        :headers {"Content-Type" "application/json"}
+                                                        :body valid-job-request-input)]
+    (is (= 200 (:status response)))
+    (is (= (json/write-str 
+      {"waiting" @jobs
+       "on_progress" @jobs-on-progress 
+       "finished" @finished-jobs})
+      (:body response)))))
