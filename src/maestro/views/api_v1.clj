@@ -6,20 +6,22 @@
   	        [maestro.dao :refer :all]
   	        [maestro.schema :refer :all]))
 
+(def headers {"Content-Type" "application/json"})
+
 (def nu-agents (atom #{}))
 (def jobs (atom #{}))
 
 (defn get-entity
   [coll id]
   (if-let [result (get-entity-by-id coll id)]
-    {:body (json/write-str result) :status 200}
-    {:body "{}" :status 404}))
+    {:body (json/write-str result) :status 200 :headers headers}
+    {:body "{}" :status 404 :headers headers}))
 
 (defn get-entities 
   [coll]
   (if (empty? coll)
-    {:body "[]" :status 404}
-    {:body (json/write-str coll) :status 200}))
+    {:body "[]" :status 404 :headers headers}
+    {:body (json/write-str coll) :status 200 :headers headers}))
 
 (defn save-entity!
   ([coll schema json-input]
@@ -30,9 +32,11 @@
    (try
      (s/validate schema json-input)
      (save-entity coll json-input)
-     {:body "{}" :status success-status}
+     {:body "{}" :status success-status :headers headers}
      (catch Exception e
-       {:body (json/write-str {:error (.getMessage e)}) :status error-status}))))
+       {:body (json/write-str {:error (.getMessage e)}) 
+        :status error-status
+        :headers headers}))))
 
 (defn get-nu-agent
   [{{:keys [id]} :path-params}]
