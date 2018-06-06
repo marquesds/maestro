@@ -4,6 +4,7 @@
   	        [clojure.data.json :as json]
   	        [schema.core :as s]
   	        [maestro.dao :refer :all]
+            [maestro.orchestrator :refer :all]
   	        [maestro.schema :refer :all]))
 
 (def headers {"Content-Type" "application/json"})
@@ -11,17 +12,22 @@
 (def nu-agents (atom #{}))
 (def jobs (atom #{}))
 (def job-requests (atom []))
+(def jobs-assigned (atom #{}))
+
+(defn not-found
+  [body]
+  {:body body :status 404 :headers headers})
 
 (defn get-entity
   [coll id]
   (if-let [result (get-entity-by-id coll id)]
     {:body (json/write-str result) :status 200 :headers headers}
-    {:body "{}" :status 404 :headers headers}))
+    (not-found "{}")))
 
 (defn get-entities 
   [coll]
   (if (empty? coll)
-    {:body "[]" :status 404 :headers headers}
+    (not-found "[]")
     {:body (json/write-str coll) :status 200 :headers headers}))
 
 (defn save-entity!
@@ -39,6 +45,16 @@
         :status error-status
         :headers headers}))))
 
+(defn assign
+  [json-input]
+  (if-let [nu-agent (get-entity-by-id nu-agents (get json-input "agent_id"))]
+      (if-let [fittest-job (get-fittest-job nu-agent @jobs)]
+        (do
+          (save-entity jobs-assigned (assign-job nu-agent fittest-job))
+          {:body (json/write-str fittest-job) :status 201 :headers headers})
+        (not-found "{}"))
+      (not-found "{}")))
+
 (defn get-nu-agent
   [{{:keys [id]} :path-params}]
   (let [result (get-entity nu-agents id)]
@@ -50,7 +66,7 @@
     result))
 
 (defn create-nu-agent
-  [{:keys [body headers]}]
+  [{:keys [body]}]
   (let [json-input (json/read-str (slurp body))]
   	(let [result (save-entity! save-entity nu-agents nu-agent-schema json-input)]
       result)))
@@ -66,7 +82,7 @@
     result))
 
 (defn create-job
-  [{:keys [body headers]}]
+  [{:keys [body]}]
   (let [json-input (json/read-str (slurp body))]
     (let [result (save-entity! save-entity jobs job-schema json-input)]
       result)))
@@ -77,10 +93,16 @@
     result))
 
 (defn create-job-request
-  [{:keys [body headers]}]
+  [{:keys [body]}]
   (let [json-input (json/read-str (slurp body))]
-    (let [result (save-entity! save-entity-keep-order job-requests job-request-schema json-input)]
-      result)))
+    (let [result (save-entity! save-entity-keep-order job-requests 
+                               job-request-schema json-input)]
+      (if (= 201 (:status result))
+        (if-let [job-assigned (orchestrate json-input nu-agents 
+                                           jobs jobs-assigned job-requests)]
+          {:body (json/write-str job-assigned) :status 201 :headers headers}
+          (not-found "{}"))
+        result))))
 
 (def routes
   #{["/api/v1/nu-agents"        :get [get-nu-agents] :route-name ::get-nu-agents]

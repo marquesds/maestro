@@ -11,10 +11,35 @@
   (do
     (reset! nu-agents #{})
     (reset! jobs #{})
-    (reset! job-requests []))
+    (reset! job-requests [])
+    (reset! jobs-assigned #{}))
   (test-fn))
 
 (use-fixtures :each reset-data)
+
+(defn save-data []
+  (save-entity nu-agents 
+    {"id" "8ab86c18-3fae-4804-bfd9-c3d6e8f66260",
+     "name" "BoJack Horseman",
+     "primary_skillset" ["bills-questions"],
+     "secondary_skillset" []})
+  (save-entity nu-agents
+    {"id" "ed0e23ef-6c2b-430c-9b90-cd4f1ff74c88",
+     "name" "Mr. Peanut Butter",
+     "primary_skillset" ["rewards-question"],
+     "secondary_skillset" ["bills-questions"]})
+  (save-entity jobs 
+    {"id" "f26e890b-df8e-422e-a39c-7762aa0bac36",
+     "type" "rewards-question",
+     "urgent" false})
+  (save-entity jobs 
+    {"id" "690de6bc-163c-4345-bf6f-25dd0c58e864",
+     "type" "bills-questions",
+     "urgent" false})
+  (save-entity jobs 
+    {"id" "c0033410-981c-428a-954a-35dec05ef1d2",
+     "type" "bills-questions",
+     "urgent" true}))
 
 (def valid-nu-agent-input 
   (json/write-str {"id" "8ab86c18-3fae-4804-bfd9-c3d6e8f66260"
@@ -135,26 +160,28 @@
     (is (= 400 (:status response)))
     (is (= job-validation-output (:body response)))))
 
-(deftest get-job-requests-test
-  (save-entity-keep-order job-requests (json/read-str valid-job-request-input))
+(deftest get-jobs-test
+  (save-entity job-requests (json/read-str valid-job-request-input))
   (let [response (pedestal-test/response-for service-fn 
                   :get "/api/v1/job-requests")]
     (is (= 200 (:status response)))
     (is (= (json/write-str @job-requests) (:body response)))))
 
-(deftest get-job-requests-not-found-test
+(deftest get-jobs-not-found-test
   (let [response (pedestal-test/response-for service-fn 
-                  :get "/api/v1/jobs")]
+                  :get "/api/v1/job-requests")]
     (is (= 404 (:status response)))
     (is (= "[]" (:body response)))))
 
 (deftest create-job-request-test
+  (save-data)
   (let [response (pedestal-test/response-for service-fn :post "/api/v1/job-requests" 
                                                         :headers {"Content-Type" "application/json"}
                                                         :body valid-job-request-input)]
     (is (= 201 (:status response)))
-    (is (= "{}" (:body response)))
-    (is (= [(json/read-str valid-job-request-input)] @job-requests))))
+    (is (= (json/write-str {"job_id" "c0033410-981c-428a-954a-35dec05ef1d2",
+                            "agent_id" "8ab86c18-3fae-4804-bfd9-c3d6e8f66260"})
+           (:body response)))))
 
 (deftest create-job-request-failed-test
   (let [response (pedestal-test/response-for service-fn :post "/api/v1/job-requests" 

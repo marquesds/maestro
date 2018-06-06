@@ -1,25 +1,6 @@
 (ns maestro.orchestrator
   (:require [maestro.dao :refer :all]))
 
-(def nu-agents (atom #{}))
-(def jobs (atom #{}))
-(def job-requests (atom []))
-(def jobs-assigned (atom #{}))
-
-(defn get-entity [element]
-  (let [nu-agent (get element "new_agent")
-        job (get element "new_job")
-        job-request (get element "job_request")]
-    (first (filter (fn [x] (not (nil? x))) [nu-agent job job-request]))))
-
-(defn get-collection 
-  [element]
-  (cond 
-    (not (nil? (get element "new_agent"))) nu-agents
-    (not (nil? (get element "new_job"))) jobs
-    (not (nil? (get element "job_request"))) job-requests
-    (not (nil? (get element "job_assigned"))) jobs-assigned))
-
 (defn urgent? 
   [job]
   (boolean (get job "urgent")))
@@ -51,25 +32,16 @@
   [nu-agent jobs]
   (first (filter (complement nil?) (map (partial filter-job nu-agent jobs) precedence-functions))))
 
-(defn save-entities
-  [input-json]
-  (doseq [element input-json]
-  	(let [coll (get-collection element)]
-  	  (if (= coll jobs)
-  	    (save-entity-keep-order coll (get-entity element))
-        (save-entity coll (get-entity element))))))
-
 (defn assign-job
   [nu-agent job]
-  {"job_assigned" { "job_id" (get job "id") "agent_id" (get nu-agent "id")}})
+  { "job_id" (get job "id") "agent_id" (get nu-agent "id")})
 
 (defn orchestrate
-  [input-json]
-  (save-entities input-json)
-  (doseq [job-request @job-requests]
-    (let [nu-agent (get-entity-by-id nu-agents (get job-request "agent_id"))]
-      (when-let [fittest-job (get-fittest-job nu-agent @jobs)]
-        (save-entity jobs-assigned (assign-job nu-agent fittest-job))
+  [job-request nu-agents jobs jobs-assigned job-requests]
+  (when-let [nu-agent (get-entity-by-id nu-agents (get job-request "agent_id"))]
+    (when-let [fittest-job (get-fittest-job nu-agent @jobs)]
+      (let [job-assigned (assign-job nu-agent fittest-job)]
+      	(save-entity jobs-assigned (assign-job nu-agent fittest-job))
         (delete-entity jobs fittest-job)
-        (delete-entity job-requests job-request))))
-  @jobs-assigned)
+        (delete-entity job-requests job-request)
+        job-assigned))))
