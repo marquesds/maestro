@@ -31,19 +31,15 @@
     {:body (json/write-str coll) :status 200 :headers headers}))
 
 (defn save-entity!
-  ([f coll schema json-input]
-   (save-entity! f coll schema json-input 201 400))
-  ([f coll schema json-input success-status]
-   (save-entity! f coll schema success-status 400))
-  ([f coll schema json-input success-status error-status]
-   (try
+  [f coll schema json-input]
+    (try
      (s/validate schema json-input)
      (f coll json-input)
-     {:body "{}" :status success-status :headers headers}
+     {:body "{}" :status 201 :headers headers}
      (catch Exception e
        {:body (json/write-str {:error (.getMessage e)}) 
-        :status error-status
-        :headers headers}))))
+        :status 400
+        :headers headers})))
 
 (defn assign
   [json-input]
