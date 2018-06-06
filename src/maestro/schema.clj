@@ -11,3 +11,6 @@
   {(s/required-key "id") s/Str
    (s/required-key "type") s/Str
    (s/required-key "urgent") s/Bool})
+
+(def job-request-schema
+  {(s/required-key "agent_id") s/Str})

@@ -10,6 +10,7 @@
 
 (def nu-agents (atom #{}))
 (def jobs (atom #{}))
+(def job-requests (atom []))
 
 (defn get-entity
   [coll id]
@@ -24,14 +25,14 @@
     {:body (json/write-str coll) :status 200 :headers headers}))
 
 (defn save-entity!
-  ([coll schema json-input]
-   (save-entity! coll schema json-input 201 400))
-  ([coll schema json-input success-status]
-   (save-entity! coll schema success-status 400))
-  ([coll schema json-input success-status error-status]
+  ([f coll schema json-input]
+   (save-entity! f coll schema json-input 201 400))
+  ([f coll schema json-input success-status]
+   (save-entity! f coll schema success-status 400))
+  ([f coll schema json-input success-status error-status]
    (try
      (s/validate schema json-input)
-     (save-entity coll json-input)
+     (f coll json-input)
      {:body "{}" :status success-status :headers headers}
      (catch Exception e
        {:body (json/write-str {:error (.getMessage e)}) 
@@ -51,7 +52,7 @@
 (defn create-nu-agent
   [{:keys [body headers]}]
   (let [json-input (json/read-str (slurp body))]
-  	(let [result (save-entity! nu-agents nu-agent-schema json-input)]
+  	(let [result (save-entity! save-entity nu-agents nu-agent-schema json-input)]
       result)))
 
 (defn get-job
@@ -67,16 +68,29 @@
 (defn create-job
   [{:keys [body headers]}]
   (let [json-input (json/read-str (slurp body))]
-    (let [result (save-entity! jobs job-schema json-input)]
+    (let [result (save-entity! save-entity jobs job-schema json-input)]
+      result)))
+
+(defn get-job-requests
+  [context]
+  (if-let [result (get-entities @job-requests)]
+    result))
+
+(defn create-job-request
+  [{:keys [body headers]}]
+  (let [json-input (json/read-str (slurp body))]
+    (let [result (save-entity! save-entity-keep-order job-requests job-request-schema json-input)]
       result)))
 
 (def routes
-  #{["/api/v1/nu-agents"     :get [get-nu-agents] :route-name ::get-nu-agents]
-    ["/api/v1/nu-agents/:id" :get [get-nu-agent] :route-name ::get-nu-agent]
-    ["/api/v1/nu-agents"     :post [create-nu-agent] :route-name ::create-nu-agent]
-    ["/api/v1/jobs"          :get [get-jobs] :route-name ::get-jobs]
-    ["/api/v1/jobs/:id"      :get [get-job] :route-name ::get-job]
-    ["/api/v1/jobs"          :post [create-job] :route-name ::create-job]})
+  #{["/api/v1/nu-agents"        :get [get-nu-agents] :route-name ::get-nu-agents]
+    ["/api/v1/nu-agents/:id"    :get [get-nu-agent] :route-name ::get-nu-agent]
+    ["/api/v1/nu-agents"        :post [create-nu-agent] :route-name ::create-nu-agent]
+    ["/api/v1/jobs"             :get [get-jobs] :route-name ::get-jobs]
+    ["/api/v1/jobs/:id"         :get [get-job] :route-name ::get-job]
+    ["/api/v1/jobs"             :post [create-job] :route-name ::create-job]
+    ["/api/v1/job-requests"     :get [get-job-requests] :route-name ::get-job-requests]
+    ["/api/v1/job-requests"     :post [create-job-request] :route-name ::create-job-request]})
 
 (def service
   {::http/type   :jetty
