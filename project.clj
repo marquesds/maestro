@@ -1,4 +1,4 @@
-(defproject maestro "1.0.0"
+(defproject maestro "2.0.0"
   :description "Assign fittest job to correct nu-agents"
   :url "https://gitlab.com/marquesds/maestro/tree/master"
   :license {:name "Eclipse Public License"

@@ -8,4 +8,4 @@ RUN lein uberjar
 
 EXPOSE 8080
 
-CMD ["java", "-jar", "target/uberjar/maestro-1.0.0-standalone.jar"]
+CMD ["java", "-jar", "target/uberjar/maestro-2.0.0-standalone.jar"]
