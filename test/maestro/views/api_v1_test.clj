@@ -162,6 +162,14 @@
     (is (= 400 (:status response)))
     (is (= job-validation-output (:body response)))))
 
+(deftest create-job-conflict-test
+  (save-entity jobs (json/read-str valid-job-input))
+  (let [response (pedestal-test/response-for service-fn :post "/api/v1/jobs" 
+                                                        :headers {"Content-Type" "application/json"}
+                                                        :body valid-job-input)]
+    (is (= 409 (:status response)))
+    (is (= "Conflict, already existing entity" (:body response)))))
+
 (deftest get-jobs-test
   (save-entity job-requests (json/read-str valid-job-request-input))
   (let [response (pedestal-test/response-for service-fn 

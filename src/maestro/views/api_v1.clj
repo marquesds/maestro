@@ -1,7 +1,8 @@
 (ns maestro.views.api-v1
   (:gen-class)
-  (:require [io.pedestal.http :as http]
-  	        [clojure.data.json :as json]
+  (:require [clojure.set :as set] 
+            [clojure.data.json :as json]
+            [io.pedestal.http :as http]
   	        [schema.core :as s]
   	        [maestro.dao :refer :all]
             [maestro.orchestrator :refer :all]
@@ -19,6 +20,10 @@
 (defn not-found
   [body]
   {:body body :status 404 :headers headers})
+
+(defn conflict
+  []
+  {:body "Conflict, already existing entity" :status 409 :headers headers})
 
 (defn get-entity
   [coll id]
@@ -86,8 +91,11 @@
 (defn create-job
   [{:keys [body]}]
   (let [json-input (json/read-str (slurp body))]
-    (let [result (save-entity! jobs job-schema json-input)]
-      result)))
+    (let [all-jobs (atom (set/union @jobs @on-progress-jobs @finished-jobs))]
+      (if (nil? (get-entity-by-id all-jobs (get json-input "id")))
+        (let [result (save-entity! jobs job-schema json-input)]
+          result)
+        (conflict)))))
 
 (defn get-job-requests
   [context]
@@ -103,7 +111,9 @@
                                            jobs jobs-assigned job-requests
                                            on-progress-jobs finished-jobs)]
           {:body (json/write-str job-assigned) :status 201 :headers headers}
-          (not-found "{}"))
+          (do
+            (delete-entity job-requests json-input)
+            (not-found "{}")))
         (do
           (delete-entity job-requests json-input)
           result)))))
