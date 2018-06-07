@@ -36,12 +36,24 @@
   [nu-agent job]
   { "job_id" (get job "id") "agent_id" (get nu-agent "id")})
 
+(defn jobs-performed
+  [nu-agent job]
+  (if-let [job-type (get-in nu-agent ["jobs_performed" (get job "type")])]
+  	(assoc-in nu-agent ["jobs_performed" (get job "type")] (inc job-type))
+  	(assoc-in nu-agent ["jobs_performed" (get job "type")] 1)))
+
+(defn update-nu-agent
+  [nu-agents nu-agent job]
+  (delete-entity nu-agents nu-agent)
+  (save-entity nu-agents (jobs-performed nu-agent job)))
+
 (defn finish-job
-  [nu-agent jobs-assigned on-progress-jobs finished-jobs]
+  [nu-agent nu-agents jobs-assigned on-progress-jobs finished-jobs]
   (let [nu-agent-id (get nu-agent "id")]
   	(when-let [job-assigned (get-entity-by-id jobs-assigned nu-agent-id "agent_id")]
   		(when-let [job (get-entity-by-id on-progress-jobs (get job-assigned "job_id"))]
   			(save-entity finished-jobs job)
+  			(update-nu-agent nu-agents nu-agent job)
   			(delete-entity on-progress-jobs job)))))
 
 (defn start-job
@@ -55,7 +67,7 @@
     (when-let [fittest-job (get-fittest-job nu-agent @jobs)]
       (let [job-assigned (assign-job nu-agent fittest-job)]
       	(save-entity jobs-assigned (assign-job nu-agent fittest-job))
-        (finish-job nu-agent jobs-assigned on-progress-jobs finished-jobs)
+        (finish-job nu-agent nu-agents jobs-assigned on-progress-jobs finished-jobs)
         (start-job fittest-job jobs on-progress-jobs)
         (delete-entity job-requests job-request)
         job-assigned))))

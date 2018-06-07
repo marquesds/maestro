@@ -152,6 +152,20 @@
         job {"id" "3221" "type" "bills-questions" "urgent" false}]
     (is (= { "job_id" "3221" "agent_id" "1234"} (assign-job nu-agent job)))))
 
+(deftest jobs-performed-test
+  (let [nu-agent {"id" "1234" "primary_skillset" ["bills-questions"] 
+                  "secondary_skillset" ["rewards-question"]}
+        first-job {"id" "3221" "type" "bills-questions" "urgent" false}
+        second-job {"id" "1324" "type" "bills-questions" "urgent" false}
+        third-job {"id" "4444" "type" "rewards-questions" "urgent" false}]
+    (let [nu-agent (jobs-performed nu-agent first-job)]
+      (is (= (get-in nu-agent ["jobs_performed" "bills-questions"]) 1))
+      (let [nu-agent (jobs-performed nu-agent second-job)]
+        (is (= (get-in nu-agent ["jobs_performed" "bills-questions"]) 2))
+        (let [nu-agent (jobs-performed nu-agent third-job)]
+          (is (= (get-in nu-agent ["jobs_performed" "bills-questions"]) 2))
+          (is (= (get-in nu-agent ["jobs_performed" "rewards-questions"]) 1)))))))
+
 (deftest finish-old-job-test
   (save-data)
   (let [job-request {"agent_id" "8ab86c18-3fae-4804-bfd9-c3d6e8f66260"}]
@@ -160,7 +174,7 @@
                         on-progress-jobs)]
       (is (= "c0033410-981c-428a-954a-35dec05ef1d2" (get job-assigned "job_id")))
       (let [nu-agent (get-entity-by-id nu-agents (get job-request "agent_id"))]
-        (finish-job nu-agent jobs-assigned on-progress-jobs finished-jobs)
+        (finish-job nu-agent nu-agents jobs-assigned on-progress-jobs finished-jobs)
         (let [job (get-entity-by-id finished-jobs "c0033410-981c-428a-954a-35dec05ef1d2")]
           (is (complement nil?) job)
           (is (nil? (some #(= job %) @on-progress-jobs))))))))
