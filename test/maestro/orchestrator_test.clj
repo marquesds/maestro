@@ -160,7 +160,7 @@
                         jobs-on-progress)]
       (is (= "c0033410-981c-428a-954a-35dec05ef1d2" (get job-assigned "job_id")))
       (let [nu-agent (get-entity-by-id nu-agents (get job-request "agent_id"))]
-        (finish-job nu-agent job-requests jobs-on-progress finished-jobs)
+        (finish-job nu-agent jobs-assigned jobs-on-progress finished-jobs)
         (let [job (get-entity-by-id finished-jobs "c0033410-981c-428a-954a-35dec05ef1d2")]
           (is (complement nil?) job)
           (is (nil? (some #(= job %) @jobs-on-progress))))))))
@@ -187,3 +187,23 @@
                         jobs-on-progress)]
       (is (= job-assigned {"job_id" "f26e890b-df8e-422e-a39c-7762aa0bac36",
                            "agent_id" "ed0e23ef-6c2b-430c-9b90-cd4f1ff74c88"})))))
+
+(deftest orchestrate-flow-job-on-progress-test
+  (save-data)
+  (let [job-request {"agent_id" "8ab86c18-3fae-4804-bfd9-c3d6e8f66260"}]
+    (orchestrate job-request nu-agents 
+                 jobs jobs-assigned job-requests finished-jobs
+                 jobs-on-progress)
+    (is (not (nil? (get-entity-by-id jobs-on-progress "c0033410-981c-428a-954a-35dec05ef1d2"))))))
+
+(deftest orchestrate-flow-job-finished-test
+  (save-data)
+  (let [job-request {"agent_id" "8ab86c18-3fae-4804-bfd9-c3d6e8f66260"}]
+    (orchestrate job-request nu-agents 
+                 jobs jobs-assigned job-requests finished-jobs
+                 jobs-on-progress)
+    (orchestrate job-request nu-agents 
+                 jobs jobs-assigned job-requests finished-jobs
+                 jobs-on-progress)
+    (is (not (nil? (get-entity-by-id jobs-on-progress "690de6bc-163c-4345-bf6f-25dd0c58e864"))))
+    (is (not (nil? (get-entity-by-id finished-jobs "c0033410-981c-428a-954a-35dec05ef1d2"))))))
