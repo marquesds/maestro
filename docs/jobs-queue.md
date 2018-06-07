@@ -36,10 +36,14 @@ Get current jobs queue state
 
 #### Not Found Response
 
-**Code**: `404 Not found`
+**Code**: `200 OK`
 
 **Output Example**:
 
 ```json
-[]
+{
+    "waiting": [],
+    "on_progress": [],
+    "finished": []
+}
 ```
