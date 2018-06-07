@@ -109,3 +109,13 @@ Create a new job
     "error": "Value does not match schema: {\"urgent\" (not (instance? java.lang.Boolean 1))}"
 }
 ```
+
+#### Conflict Response
+
+**Code**: `409 Conflict`
+
+**Output Example**:
+
+```json
+Conflict, already existing entity
+```
