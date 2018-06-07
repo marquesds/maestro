@@ -11,10 +11,10 @@
   (do
     (reset! nu-agents #{})
     (reset! jobs #{})
-    (reset! job-requests [])
-    (reset! jobs-assigned #{})
+    (reset! on-progress-jobs #{})
     (reset! finished-jobs #{})
-    (reset! jobs-on-progress #{}))
+    (reset! job-requests [])
+    (reset! jobs-assigned #{}))
   (test-fn))
 
 (use-fixtures :each reset-data)
@@ -200,6 +200,6 @@
     (is (= 200 (:status response)))
     (is (= (json/write-str 
       {"waiting" @jobs
-       "on_progress" @jobs-on-progress 
+       "on_progress" @on-progress-jobs 
        "finished" @finished-jobs})
       (:body response)))))

@@ -5,20 +5,20 @@
 
 (def nu-agents (atom #{}))
 (def jobs (atom #{}))
+(def on-progress-jobs (atom #{}))
+(def finished-jobs (atom #{}))
 (def job-requests (atom []))
 (def jobs-assigned (atom #{}))
-(def finished-jobs (atom #{}))
-(def jobs-on-progress (atom #{}))
 
 (defn reset-data
   [test-fn]
   (do
     (reset! nu-agents #{})
     (reset! jobs #{})
-    (reset! job-requests [])
-    (reset! jobs-assigned #{})
+    (reset! on-progress-jobs #{})
     (reset! finished-jobs #{})
-    (reset! jobs-on-progress #{}))
+    (reset! job-requests [])
+    (reset! jobs-assigned #{}))
   (test-fn))
 
 (use-fixtures :each reset-data)
@@ -157,34 +157,34 @@
   (let [job-request {"agent_id" "8ab86c18-3fae-4804-bfd9-c3d6e8f66260"}]
     (let [job-assigned (orchestrate job-request nu-agents 
                         jobs jobs-assigned job-requests finished-jobs
-                        jobs-on-progress)]
+                        on-progress-jobs)]
       (is (= "c0033410-981c-428a-954a-35dec05ef1d2" (get job-assigned "job_id")))
       (let [nu-agent (get-entity-by-id nu-agents (get job-request "agent_id"))]
-        (finish-job nu-agent jobs-assigned jobs-on-progress finished-jobs)
+        (finish-job nu-agent jobs-assigned on-progress-jobs finished-jobs)
         (let [job (get-entity-by-id finished-jobs "c0033410-981c-428a-954a-35dec05ef1d2")]
           (is (complement nil?) job)
-          (is (nil? (some #(= job %) @jobs-on-progress))))))))
+          (is (nil? (some #(= job %) @on-progress-jobs))))))))
 
 (deftest start-new-job-test
   (let [job {"id" "c0033410-981c-428a-954a-35dec05ef1d2" 
              "type" "bills-questions" "urgent" true}]
     (save-entity jobs job)
-    (start-job job jobs jobs-on-progress)
+    (start-job job jobs on-progress-jobs)
     (is (nil? (some #(= job %) @jobs)))
-    (is (complement nil?) (some #(= job %) @jobs-on-progress))))
+    (is (complement nil?) (some #(= job %) @on-progress-jobs))))
 
 (deftest orchestrate-test
   (save-data)
   (let [job-request {"agent_id" "8ab86c18-3fae-4804-bfd9-c3d6e8f66260"}]
     (let [job-assigned (orchestrate job-request nu-agents 
-                        jobs jobs-assigned job-requests finished-jobs
-                        jobs-on-progress)]
+                        jobs jobs-assigned job-requests
+                        on-progress-jobs finished-jobs)]
       (is (= job-assigned {"job_id" "c0033410-981c-428a-954a-35dec05ef1d2",
                            "agent_id" "8ab86c18-3fae-4804-bfd9-c3d6e8f66260"}))))
   (let [job-request {"agent_id" "ed0e23ef-6c2b-430c-9b90-cd4f1ff74c88"}]
     (let [job-assigned (orchestrate job-request nu-agents 
-                        jobs jobs-assigned job-requests finished-jobs
-                        jobs-on-progress)]
+                        jobs jobs-assigned job-requests 
+                        on-progress-jobs finished-jobs)]
       (is (= job-assigned {"job_id" "f26e890b-df8e-422e-a39c-7762aa0bac36",
                            "agent_id" "ed0e23ef-6c2b-430c-9b90-cd4f1ff74c88"})))))
 
@@ -192,18 +192,20 @@
   (save-data)
   (let [job-request {"agent_id" "8ab86c18-3fae-4804-bfd9-c3d6e8f66260"}]
     (orchestrate job-request nu-agents 
-                 jobs jobs-assigned job-requests finished-jobs
-                 jobs-on-progress)
-    (is (not (nil? (get-entity-by-id jobs-on-progress "c0033410-981c-428a-954a-35dec05ef1d2"))))))
+                 jobs jobs-assigned job-requests
+                 on-progress-jobs finished-jobs)
+    (is (not (nil? (get-entity-by-id on-progress-jobs "c0033410-981c-428a-954a-35dec05ef1d2"))))))
 
 (deftest orchestrate-flow-job-finished-test
   (save-data)
   (let [job-request {"agent_id" "8ab86c18-3fae-4804-bfd9-c3d6e8f66260"}]
     (orchestrate job-request nu-agents 
-                 jobs jobs-assigned job-requests finished-jobs
-                 jobs-on-progress)
+                 jobs jobs-assigned job-requests 
+                 on-progress-jobs finished-jobs)
+    (is (not (nil? (get-entity-by-id on-progress-jobs "c0033410-981c-428a-954a-35dec05ef1d2"))))
     (orchestrate job-request nu-agents 
-                 jobs jobs-assigned job-requests finished-jobs
-                 jobs-on-progress)
-    (is (not (nil? (get-entity-by-id jobs-on-progress "690de6bc-163c-4345-bf6f-25dd0c58e864"))))
+                 jobs jobs-assigned job-requests 
+                 on-progress-jobs finished-jobs)
+    (is (not (nil? (get-entity-by-id on-progress-jobs "690de6bc-163c-4345-bf6f-25dd0c58e864"))))
+    (is (nil? (get-entity-by-id on-progress-jobs "c0033410-981c-428a-954a-35dec05ef1d2")))
     (is (not (nil? (get-entity-by-id finished-jobs "c0033410-981c-428a-954a-35dec05ef1d2"))))))

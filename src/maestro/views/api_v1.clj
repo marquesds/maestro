@@ -11,10 +11,10 @@
 
 (def nu-agents (atom #{}))
 (def jobs (atom #{}))
+(def on-progress-jobs (atom #{}))
+(def finished-jobs (atom #{}))
 (def job-requests (atom []))
 (def jobs-assigned (atom #{}))
-(def finished-jobs (atom #{}))
-(def jobs-on-progress (atom #{}))
 
 (defn not-found
   [body]
@@ -88,7 +88,7 @@
       (if (= 201 (:status result))
         (if-let [job-assigned (orchestrate json-input nu-agents 
                                            jobs jobs-assigned job-requests
-                                           finished-jobs jobs-on-progress)]
+                                           on-progress-jobs finished-jobs)]
           {:body (json/write-str job-assigned) :status 201 :headers headers}
           (not-found "{}"))
         result))))
@@ -96,7 +96,7 @@
 (defn get-queue-state
   [context]
   {:body (json/write-str {"waiting" @jobs 
-                          "on_progress" @jobs-on-progress 
+                          "on_progress" @on-progress-jobs 
                           "finished" @finished-jobs})
    :status 200
    :headers headers})
