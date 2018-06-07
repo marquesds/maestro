@@ -192,6 +192,12 @@
     (is (= 400 (:status response)))
     (is (= job-request-validation-output (:body response)))))
 
+(deftest create-job-request-nu-agent-not-found-test
+  (let [response (pedestal-test/response-for service-fn :post "/api/v1/job-requests" 
+                                                        :headers {"Content-Type" "application/json"}
+                                                        :body valid-job-request-input)]
+    (is (= 404 (:status response)))))
+
 (deftest get-queue-state-waiting-test
   (save-data)
   (let [response (pedestal-test/response-for service-fn :get "/api/v1/jobs-queue" 

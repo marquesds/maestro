@@ -33,11 +33,25 @@
     {:body (json/write-str coll) :status 200 :headers headers}))
 
 (defn save-entity!
-  [f coll schema json-input]
+  [coll schema json-input]
     (try
      (s/validate schema json-input)
-     (f coll json-input)
+     (save-entity coll json-input)
      {:body "{}" :status 201 :headers headers}
+     (catch Exception e
+       {:body (json/write-str {:error (.getMessage e)}) 
+        :status 400
+        :headers headers})))
+
+(defn save-job-request!
+  [coll json-input]
+    (try
+     (s/validate job-request-schema json-input)
+     (if ((complement nil?) (get-entity-by-id nu-agents (get json-input "agent_id")))
+      (do
+        (save-entity-keep-order coll json-input)
+        {:body "{}" :status 201 :headers headers})
+      (not-found "{}"))
      (catch Exception e
        {:body (json/write-str {:error (.getMessage e)}) 
         :status 400
@@ -56,7 +70,7 @@
 (defn create-nu-agent
   [{:keys [body]}]
   (let [json-input (json/read-str (slurp body))]
-  	(let [result (save-entity! save-entity nu-agents nu-agent-schema json-input)]
+  	(let [result (save-entity! nu-agents nu-agent-schema json-input)]
       result)))
 
 (defn get-job
@@ -72,7 +86,7 @@
 (defn create-job
   [{:keys [body]}]
   (let [json-input (json/read-str (slurp body))]
-    (let [result (save-entity! save-entity jobs job-schema json-input)]
+    (let [result (save-entity! jobs job-schema json-input)]
       result)))
 
 (defn get-job-requests
@@ -83,15 +97,16 @@
 (defn create-job-request
   [{:keys [body]}]
   (let [json-input (json/read-str (slurp body))]
-    (let [result (save-entity! save-entity-keep-order job-requests 
-                               job-request-schema json-input)]
+    (let [result (save-job-request! job-requests json-input)]
       (if (= 201 (:status result))
         (if-let [job-assigned (orchestrate json-input nu-agents 
                                            jobs jobs-assigned job-requests
                                            on-progress-jobs finished-jobs)]
           {:body (json/write-str job-assigned) :status 201 :headers headers}
           (not-found "{}"))
-        result))))
+        (do
+          (delete-entity job-requests json-input)
+          result)))))
 
 (defn get-queue-state
   [context]
